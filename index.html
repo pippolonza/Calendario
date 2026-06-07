@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>AlpHub</title>
+<title>CalenTabar</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -210,7 +210,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 <div id="app">
   <div id="header">
     <div id="header-top">
-      <div id="app-title">Alp<span>Hub</span></div>
+      <div id="app-title">Calen<span>Tabar</span></div>
       <div id="header-meta">
         <div id="view-toggle">
           <button class="vt-btn active" data-view="timeline" onclick="switchMainView('timeline')">Giorno</button>
@@ -571,7 +571,14 @@ function makeMonthCell(d,otherMonth) {
   const dots = [...new Set(dayEvts.map(function(e){ return e.cat; }))].slice(0,4)
     .map(function(c){ return '<div class="month-dot" style="background:var(--c-'+(c==='commissione'?'comm':c==='spostamento'?'spost':c==='libero'?'libero':'lavoro')+')"></div>'; }).join('');
   cell.innerHTML = '<div class="day-num">'+d.getDate()+'</div><div class="month-dots">'+dots+'</div>';
-  cell.onclick = function(){ selectedDate=ds; buildWeekStrip(); buildTimeline(); updateTlHeader(); switchMainView('timeline'); };
+  cell.onclick = function(){
+    selectedDate=ds;
+    buildWeekStrip();
+    buildTimeline();
+    updateTlHeader();
+    switchMainView('timeline');
+    setTimeout(function(){ openModal(); }, 320);
+  };
   return cell;
 }
 function prevMonth(){ viewMonthOffset--; buildMonthly(); }
