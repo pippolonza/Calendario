@@ -477,21 +477,27 @@ function saveData(showError) {
     return false;
   }
 }
+function isPresetEvent(evt) {
+  const presets = {
+    'Turno Pranzo':'lavoro|10:00|14:00',
+    'Turno Cena':'lavoro|18:00|22:00',
+    'Scendo in paese':'spostamento|14:30|17:00',
+    'Trekking Rifugio Doss':'libero|08:00|10:00',
+    'Bus Linea 4 - Trento':'spostamento|09:15|10:30',
+    'Bus Linea 4 – Trento':'spostamento|09:15|10:30',
+    'Turno Mattina':'lavoro|07:00|11:00'
+  };
+  return presets[evt.title] === [evt.cat, evt.start, evt.end].join('|');
+}
+function removePresetEvents() {
+  const before = events.length;
+  events = events.filter(function(evt){ return !isPresetEvent(evt); });
+  if (events.length !== before) saveData(false);
+}
 function genId() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 
 function seedIfEmpty() {
-  if (events.length > 0) return;
-  const t = todayStr();
-  const tmr = new Date(); tmr.setDate(tmr.getDate()+1); const t2 = dateStr(tmr);
-  events = [
-    {id:genId(),date:t,title:'Turno Pranzo',cat:'lavoro',start:'10:00',end:'14:00',notes:''},
-    {id:genId(),date:t,title:'Turno Cena',cat:'lavoro',start:'18:00',end:'22:00',notes:''},
-    {id:genId(),date:t,title:'Scendo in paese',cat:'spostamento',start:'14:30',end:'17:00',transport:'bus',notes:'Spesa al Coop.'},
-    {id:genId(),date:t,title:'Trekking Rifugio Doss',cat:'libero',start:'08:00',end:'10:00',notes:''},
-    {id:genId(),date:t2,title:'Bus Linea 4 – Trento',cat:'spostamento',start:'09:15',end:'10:30',transport:'bus',notes:'Ultima corsa ritorno 18:15!'},
-    {id:genId(),date:t2,title:'Turno Mattina',cat:'lavoro',start:'07:00',end:'11:00',notes:''},
-  ];
-  saveData();
+  return;
 }
 
 // ── WEEK STRIP ──────────────────────────────
@@ -858,7 +864,7 @@ function switchMainView(view) {
 
 // ── INIT ─────────────────────────────────────
 loadData();
-seedIfEmpty();
+removePresetEvents();
 buildWeekStrip();
 buildTimeline();
 updateTlHeader();
