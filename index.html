@@ -420,7 +420,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--f
 </div>
 
 <script>
-const STORAGE_KEY = 'alphub_v3';
+const STORAGE_KEY = 'calentabar_events_v1';
+const LEGACY_STORAGE_KEYS = ['alphub_v3'];
+const STORAGE_KEYS = [STORAGE_KEY].concat(LEGACY_STORAGE_KEYS);
 let events = [];
 let selectedDate = todayStr();
 let editingId = null;
@@ -438,10 +440,43 @@ function todayStr() {
 function dateStr(d) {
   return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 }
-function loadData() {
-  try { events = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e) { events = []; }
+function canUseLocalStorage() {
+  try {
+    const testKey = 'calentabar_storage_test';
+    localStorage.setItem(testKey, '1');
+    localStorage.removeItem(testKey);
+    return true;
+  } catch(e) {
+    return false;
+  }
 }
-function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(events)); }
+function loadData() {
+  events = [];
+  if (!canUseLocalStorage()) return;
+  for (let i = 0; i < STORAGE_KEYS.length; i++) {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS[i]);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) {
+        events = parsed;
+        if (STORAGE_KEYS[i] !== STORAGE_KEY) saveData(false);
+        return;
+      }
+    } catch(e) {}
+  }
+}
+function saveData(showError) {
+  try {
+    const payload = JSON.stringify(events);
+    localStorage.setItem(STORAGE_KEY, payload);
+    LEGACY_STORAGE_KEYS.forEach(function(key){ localStorage.setItem(key, payload); });
+    return localStorage.getItem(STORAGE_KEY) === payload;
+  } catch(e) {
+    if (showError !== false) alert('Memoria locale non disponibile: il browser non sta salvando gli eventi.');
+    return false;
+  }
+}
 function genId() { return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 
 function seedIfEmpty() {
@@ -768,14 +803,14 @@ function saveEvent() {
         recurId});
     });
   }
-  saveData();
+  if (!saveData()) return;
   document.getElementById('modal-overlay').classList.remove('open');
   buildWeekStrip(); buildTimeline(); buildLogbook(); buildMonthly();
 }
 function deleteEvent() {
   if (!editingId) return;
   events = events.filter(function(e){ return e.id!==editingId; });
-  saveData();
+  if (!saveData()) return;
   document.getElementById('modal-overlay').classList.remove('open');
   buildWeekStrip(); buildTimeline(); buildLogbook(); buildMonthly();
 }
@@ -829,6 +864,10 @@ buildTimeline();
 updateTlHeader();
 buildMonthly();
 setInterval(updateNowLine, 60000);
+window.addEventListener('pagehide', function(){ saveData(false); });
+document.addEventListener('visibilitychange', function(){
+  if (document.visibilityState === 'hidden') saveData(false);
+});
 
 let tsX = 0;
 document.getElementById('timeline-view').addEventListener('touchstart', function(e){ tsX=e.touches[0].clientX; }, {passive:true});
